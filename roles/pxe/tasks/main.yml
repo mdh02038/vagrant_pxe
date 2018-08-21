@@ -1,0 +1,79 @@
+---
+
+- name: install packages
+  apt: 
+    name: "{{ item }}"
+  with_items:
+  - apache2
+  - tftpd-hpa
+  - inetutils-inetd
+  - isc-dhcp-server
+
+
+#- name: tftp config file
+#  copy:
+#    src: tftpd-hpa
+#    dest: /etc/default/tftpd-hpa
+#
+#
+#- name: inetd config file
+#  copy:
+#    src: tftpd.conf
+#    dest: /etc/inetd.d/tftpd.conf
+#
+
+- name: ubuntu iso
+  copy:
+    src: ubuntu-14.10-server-amd64.iso
+    dest: /
+  register: iso
+
+- name: mv install script
+  copy:
+    src: install.sh
+    dest: / 
+  register: install
+
+- name: run install script
+  shell: . /install.sh
+  when: iso.changed or install.changed
+
+- name: syslinux files
+  copy:
+    src: syslinux
+    dest: /var/lib/tftpboot/
+    mode: 0755
+
+- name: move pxelinux.0
+  copy:
+    src: pxelinux.0
+    dest: /var/lib/tftpboot/
+    mode: 0755
+
+- name: create pxelinux.cfg dir
+  file: path=/var/lib/tftpboot/pxelinux.cfg state=directory
+- name: pxe file
+  copy:
+    src: default
+    dest: /var/lib/tftpboot/pxelinux.cfg/default
+
+- name: seed file
+  copy:
+    src: local-sources.seed
+    dest: /var/www/html/ubuntu/preseed/local-sources.seed
+
+- name: dhcp file 
+  copy:
+    src: dhcpd.conf
+    dest: /etc/dhcp/dhcpd.conf
+
+- name: dhcp file
+  lineinfile:
+     path: /etc/default/isc-dhcp-server
+     regexp: "^INTERFACES="
+     line: enp0s8
+
+- service:
+    name:  isc-dhcp-server
+    state: restarted
+

@@ -1,0 +1,2 @@
+d-i live-installer/net-image string http://10.19.0.254/ubuntu/install/filesystem.squashfs
+

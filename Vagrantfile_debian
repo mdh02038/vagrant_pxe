@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.define :pxe_server do |pxe_server|
+
+#    pxe_server.vm.box = "ubuntu/xenial64"
+    pxe_server.vm.box = "debian/jessie64"
+    pxe_server.vm.hostname = "pxe-server"
+    #using rsync to fix nfs issues
+    pxe_server.vm.synced_folder "config", "/config", type: "rsync"
+    pxe_server.vm.network "private_network", ip: "192.168.0.254", virtualbox__intnet: "pxe_network"
+
+    pxe_server.vm.provider :virtualbox do |vb|
+      vb.memory = '512'
+      vb.cpus = '1'
+      vb.gui = true
+    end
+
+    pxe_server.vm.provision "shell", path: "config/setup.sh"
+
+  end
+
+
+  config.vm.define :pxe_client do |pxe_client|
+
+#    pxe_client.vm.box = 'ubuntu/xenial64'
+    pxe_client.vm.box = "debian/jessie64"
+
+    pxe_client.vm.provider :virtualbox do |vb|
+      vb.memory = '512'
+      vb.cpus = '1'
+      vb.gui = 'true'
+
+      vb.customize [
+        'modifyvm', :id,
+        '--nic1', 'intnet',
+        '--intnet1', 'pxe_network',
+        '--boot1', 'net',
+        '--boot2', 'none',
+        '--boot3', 'none',
+        '--boot4', 'none'
+      ]
+
+    end
+  end
+end

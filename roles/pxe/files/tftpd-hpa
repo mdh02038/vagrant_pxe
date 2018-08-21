@@ -1,0 +1,5 @@
+TFTP_USERNAME="tftp"
+TFTP_DIRECTORY="/var/lib/tftpboot"
+TFTP_ADDRESS=":69"
+RUN_DAEMON="yes"
+OPTIONS="-l -s /var/lib/tftpboot"
